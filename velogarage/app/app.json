@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "VeloGarage",
+    "slug": "velogarage",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "velogarage",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FC4C02"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.velogarage.app",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["strava"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FC4C02"
+      },
+      "package": "com.velogarage.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "velogarage" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-sqlite",
+        {
+          "enableFTS": true,
+          "useSQLCipher": true
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
