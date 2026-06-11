@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VeloGarage — Bike Maintenance Tracker</title>
+  <meta name="description" content="VeloGarage connects to your Strava account to track mileage on every bike component — chain, cassette, tires, brakes — so you always know what needs service." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FC4C02;
+      --bg: #0d0d0d;
+      --surface: #181818;
+      --surface2: #222;
+      --text: #f0f0f0;
+      --muted: #888;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #222;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo { font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .nav-logo span { color: var(--orange); }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+      text-align: center;
+    }
+    .hero-emoji { font-size: 72px; line-height: 1; margin-bottom: 24px; }
+    .hero h1 { font-size: clamp(40px, 8vw, 72px); font-weight: 900; letter-spacing: -2px; line-height: 1.05; }
+    .hero h1 em { color: var(--orange); font-style: normal; }
+    .hero p { margin: 20px auto 0; max-width: 520px; font-size: 18px; color: var(--muted); line-height: 1.7; }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; margin-top: 36px; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: opacity .2s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--orange); color: #fff; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid #333; }
+
+    /* PHONE MOCKUP */
+    .mockup-wrap {
+      max-width: 360px;
+      margin: 60px auto 0;
+    }
+    .phone {
+      background: var(--surface);
+      border-radius: 40px;
+      border: 2px solid #2a2a2a;
+      padding: 20px 16px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    }
+    .phone-screen { border-radius: 24px; overflow: hidden; background: var(--bg); }
+    .screen-header { background: #111; padding: 16px; border-bottom: 1px solid #222; }
+    .screen-title { font-size: 20px; font-weight: 800; color: #fff; }
+    .screen-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .bike-card { background: var(--surface); margin: 12px; border-radius: 14px; padding: 16px; }
+    .bike-name { font-weight: 700; color: #fff; font-size: 15px; }
+    .bike-dist { color: var(--orange); font-size: 13px; font-weight: 600; margin-top: 4px; }
+    .comp-list { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .comp-row { background: var(--surface); border-radius: 12px; padding: 12px 14px; }
+    .comp-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .comp-label { font-size: 13px; font-weight: 600; color: #fff; }
+    .comp-status { font-size: 11px; font-weight: 700; }
+    .status-good { color: var(--green); }
+    .status-warn { color: var(--amber); }
+    .status-over { color: var(--red); }
+    .bar-track { height: 5px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .bar-green { background: var(--green); width: 35%; }
+    .bar-amber { background: var(--amber); width: 82%; }
+    .bar-red { background: var(--red); width: 100%; }
+    .comp-meta { font-size: 11px; color: #555; margin-top: 4px; }
+
+    /* FEATURES */
+    .section { max-width: 1000px; margin: 0 auto; padding: 80px 24px; }
+    .section-label { font-size: 12px; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+    .section-title { font-size: clamp(28px, 5vw, 42px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
+    .section-body { font-size: 17px; color: var(--muted); max-width: 540px; line-height: 1.7; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 48px; }
+    .feature-card { background: var(--surface); border-radius: 20px; padding: 28px; border: 1px solid #222; }
+    .feature-icon { font-size: 32px; margin-bottom: 16px; }
+    .feature-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* HOW IT WORKS */
+    .steps { display: flex; flex-direction: column; gap: 0; margin-top: 48px; }
+    .step { display: grid; grid-template-columns: 48px 1fr; gap: 20px; padding-bottom: 36px; position: relative; }
+    .step:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 48px;
+      bottom: 0;
+      width: 2px;
+      background: #222;
+    }
+    .step-num { width: 48px; height: 48px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; flex-shrink: 0; }
+    .step-content { padding-top: 10px; }
+    .step-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .step-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* INTERVALS */
+    .intervals-table { width: 100%; border-collapse: collapse; margin-top: 32px; }
+    .intervals-table th { text-align: left; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 10px 16px; border-bottom: 1px solid #222; }
+    .intervals-table td { padding: 14px 16px; border-bottom: 1px solid #1a1a1a; font-size: 14px; }
+    .intervals-table td:first-child { color: #fff; font-weight: 500; }
+    .intervals-table td:last-child { color: var(--orange); font-weight: 600; }
+    .intervals-table tr:hover td { background: var(--surface); }
+
+    /* PRIVACY */
+    .privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 40px; }
+    .privacy-card { background: var(--surface); border-radius: 16px; padding: 24px; border: 1px solid #222; }
+    .privacy-icon { font-size: 28px; margin-bottom: 12px; }
+    .privacy-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .privacy-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid #1a1a1a;
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 1px solid #1a1a1a; }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .hero { padding: 60px 20px 48px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="#">🚲 <span>Velo</span>Garage</a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#intervals">Intervals</a>
+      <a href="#privacy">Privacy</a>
+      <a href="https://github.com/deyshift/Nest/tree/main/velogarage">GitHub</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-emoji">🚲</div>
+    <h1>Your bikes.<br /><em>Always ready.</em></h1>
+    <p>VeloGarage connects to Strava to automatically track mileage on every component — chain, cassette, tires, brakes — so you know exactly when to wrench.</p>
+    <div class="hero-cta">
+      <a href="https://github.com/deyshift/Nest/tree/main/velogarage" class="btn btn-primary">View on GitHub</a>
+      <a href="#how-it-works" class="btn btn-secondary">How it works</a>
+    </div>
+  </section>
+
+  <!-- PHONE MOCKUP -->
+  <div class="mockup-wrap">
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="screen-header">
+          <div class="screen-title">My Garage</div>
+          <div class="screen-sub">Synced today</div>
+        </div>
+        <div class="bike-card">
+          <div class="bike-name">Trek Domane SL6</div>
+          <div class="bike-dist">12,480 km total</div>
+        </div>
+        <div class="comp-list">
+          <div class="comp-row">
+            <div class="comp-top">
+              <span class="comp-label">Chain (wax)</span>
+              <span class="comp-status status-over">⚠ Overdue</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill bar-red"></div></div>
+            <div class="comp-meta">412 km / 400 km interval</div>
+          </div>
+          <div class="comp-row">
+            <div class="comp-top">
+              <span class="comp-label">Rear Tire</span>
+              <span class="comp-status status-warn">⏱ Due soon</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill bar-amber"></div></div>
+            <div class="comp-meta">2,460 km / 3,000 km interval</div>
+          </div>
+          <div class="comp-row">
+            <div class="comp-top">
+              <span class="comp-label">Cassette</span>
+              <span class="comp-status status-good">✓ Good</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill bar-green"></div></div>
+            <div class="comp-meta">2,800 km / 8,000 km interval</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" style="margin-top: 80px;" />
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything in your garage,<br />nothing you don't need.</h2>
+    <p class="section-body">Built for cyclists who actually wrench their own bikes. No subscriptions, no bloat — just your components and their mileage.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <div class="feature-title">Strava sync</div>
+        <div class="feature-desc">Connects to your Strava account and automatically calculates mileage per bike from your ride history. No manual entry.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⛓️</div>
+        <div class="feature-title">Lube-aware chain tracking</div>
+        <div class="feature-desc">Different intervals for wax (400 km), dry lube (175 km), wet lube (400 km), and ceramic (650 km). Switch lube types any time.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚨</div>
+        <div class="feature-title">Health status at a glance</div>
+        <div class="feature-desc">Green, amber, and red health bars for every component. Know what needs attention before you head out.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏠</div>
+        <div class="feature-title">Multi-bike garage</div>
+        <div class="feature-desc">All your Strava bikes in one place. Track separate component sets per bike — road, gravel, MTB.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <div class="feature-title">Maintenance log</div>
+        <div class="feature-desc">Record every service — replacement, lube, clean, adjust — with date and odometer. Full history per component.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📴</div>
+        <div class="feature-title">Works offline</div>
+        <div class="feature-desc">All data lives on your device in encrypted local storage. Sync when you have signal, ride any time.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how-it-works">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Set up in minutes.</h2>
+    <p class="section-body">Connect once, then let VeloGarage do the maths on every ride.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Connect your Strava account</div>
+          <div class="step-desc">Tap "Connect with Strava" and authorise read-only access to your activities. VeloGarage never posts or modifies anything on your behalf.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">Your bikes appear automatically</div>
+          <div class="step-desc">Every bike registered in Strava shows up in your garage with its total mileage. Primary bike is highlighted.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">Add your components</div>
+          <div class="step-desc">Tap a bike and add components — chain (pick your lube type), cassette, tires, brake pads, rotors. VeloGarage records the current odometer as the install point.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">Go ride</div>
+          <div class="step-desc">After each ride, open VeloGarage and pull to sync. Mileage updates across all components on that bike. Health bars turn amber at 80%, red at 100%.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title">Log service, reset the clock</div>
+          <div class="step-desc">After wrenching, tap "Log Service" on the component. The mileage counter resets. Full service history is always one tap away.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- INTERVALS -->
+  <section class="section" id="intervals">
+    <div class="section-label">Maintenance intervals</div>
+    <h2 class="section-title">Sensible defaults,<br />fully customisable.</h2>
+    <p class="section-body">Based on manufacturer guidelines and real-world experience. Override any interval per component if your conditions or riding style differ.</p>
+
+    <table class="intervals-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Default interval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Chain — wax</td><td>400 km</td></tr>
+        <tr><td>Chain — dry lube</td><td>175 km</td></tr>
+        <tr><td>Chain — wet lube</td><td>400 km</td></tr>
+        <tr><td>Chain — ceramic</td><td>650 km</td></tr>
+        <tr><td>Cassette</td><td>8,000 km</td></tr>
+        <tr><td>Chainring</td><td>15,000 km</td></tr>
+        <tr><td>Front tire</td><td>4,000 km</td></tr>
+        <tr><td>Rear tire</td><td>3,000 km</td></tr>
+        <tr><td>Brake pads</td><td>2,000 km</td></tr>
+        <tr><td>Rotors</td><td>10,000 km</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- PRIVACY -->
+  <section class="section" id="privacy">
+    <div class="section-label">Privacy</div>
+    <h2 class="section-title">Your data stays yours.</h2>
+    <p class="section-body">VeloGarage is built to be trustworthy. No accounts to create, no data sold, no servers storing your maintenance history.</p>
+
+    <div class="privacy-grid">
+      <div class="privacy-card">
+        <div class="privacy-icon">🔒</div>
+        <div class="privacy-title">Encrypted on-device storage</div>
+        <div class="privacy-desc">All maintenance data lives in an encrypted SQLite database on your phone. It never leaves your device.</div>
+      </div>
+      <div class="privacy-card">
+        <div class="privacy-icon">🔑</div>
+        <div class="privacy-title">Secure token storage</div>
+        <div class="privacy-desc">Strava tokens are stored in iOS Keychain / Android Keystore — hardware-backed encryption.</div>
+      </div>
+      <div class="privacy-card">
+        <div class="privacy-icon">👁️</div>
+        <div class="privacy-title">Read-only Strava access</div>
+        <div class="privacy-desc">VeloGarage only requests <code>activity:read_all</code> scope. It cannot post, modify, or delete anything on Strava.</div>
+      </div>
+      <div class="privacy-card">
+        <div class="privacy-icon">📂</div>
+        <div class="privacy-title">Open source</div>
+        <div class="privacy-desc">The entire codebase is on GitHub. Inspect it, fork it, self-host the backend. No black boxes.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      VeloGarage is open source —
+      <a href="https://github.com/deyshift/Nest/tree/main/velogarage">view on GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.strava.com">Powered by Strava</a>
+    </p>
+    <p style="margin-top: 8px; color: #444;">Not affiliated with Strava, Inc.</p>
+  </footer>
+
+</body>
+</html>
