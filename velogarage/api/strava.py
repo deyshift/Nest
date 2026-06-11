@@ -5,17 +5,19 @@ STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"
 STRAVA_API_BASE = "https://www.strava.com/api/v3"
 
 
-async def exchange_code(client_id: str, client_secret: str, code: str) -> dict[str, Any]:
+async def exchange_code(
+    client_id: str, client_secret: str, code: str, redirect_uri: str | None = None
+) -> dict[str, Any]:
+    data: dict[str, str] = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "code": code,
+        "grant_type": "authorization_code",
+    }
+    if redirect_uri:
+        data["redirect_uri"] = redirect_uri
     async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            STRAVA_TOKEN_URL,
-            data={
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "code": code,
-                "grant_type": "authorization_code",
-            },
-        )
+        resp = await client.post(STRAVA_TOKEN_URL, data=data)
         resp.raise_for_status()
         return resp.json()
 

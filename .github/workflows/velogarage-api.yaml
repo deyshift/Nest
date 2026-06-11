@@ -68,12 +68,17 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
+      # Required GitHub secrets:
+      #   STRAVA_CLIENT_ID       — from strava.com/settings/api
+      #   STRAVA_CLIENT_SECRET   — from strava.com/settings/api
+      #   API_PUBLIC_URL         — deployed Railway URL, e.g. https://velogarage-api.up.railway.app
+      #                            Set Authorization Callback Domain in Strava to its hostname only
+      #   RAILWAY_TOKEN          — from railway.app account settings
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
-          STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
         run: |
           railway up --service velogarage-api \
-            --set STRAVA_CLIENT_ID="$STRAVA_CLIENT_ID" \
-            --set STRAVA_CLIENT_SECRET="$STRAVA_CLIENT_SECRET"
+            --set STRAVA_CLIENT_ID="${{ secrets.STRAVA_CLIENT_ID }}" \
+            --set STRAVA_CLIENT_SECRET="${{ secrets.STRAVA_CLIENT_SECRET }}" \
+            --set API_PUBLIC_URL="${{ secrets.API_PUBLIC_URL }}"

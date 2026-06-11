@@ -16,9 +16,10 @@ velogarage/
 
 | Secret | Where it lives | Notes |
 |---|---|---|
-| `STRAVA_CLIENT_ID` | GitHub Secrets + local `.env` | Also safe as `EXPO_PUBLIC_STRAVA_CLIENT_ID` in the app (it's public) |
-| `STRAVA_CLIENT_SECRET` | GitHub Secrets + local `.env` **only** | **Never** in the Expo app or its build environment |
-| `RAILWAY_TOKEN` (or equivalent) | GitHub Secrets | Platform deploy token |
+| `STRAVA_CLIENT_ID` | GitHub Secrets + `api/.env` | Also safe as `EXPO_PUBLIC_STRAVA_CLIENT_ID` in the app (it's public) |
+| `STRAVA_CLIENT_SECRET` | GitHub Secrets + `api/.env` **only** | **Never** in the Expo app or its build environment |
+| `API_PUBLIC_URL` | GitHub Secrets + `api/.env` | e.g. `https://velogarage-api.up.railway.app` — set Strava's Authorization Callback Domain to this hostname |
+| `RAILWAY_TOKEN` | GitHub Secrets | Platform deploy token |
 
 **Local development:** copy `.env.example` → `.env` in both `api/` and `app/`, fill in values.
 
