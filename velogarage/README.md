@@ -12,6 +12,22 @@ velogarage/
 └── api/   # FastAPI (Python) — Strava OAuth proxy
 ```
 
+## Secrets Management
+
+| Secret | Where it lives | Notes |
+|---|---|---|
+| `STRAVA_CLIENT_ID` | GitHub Secrets + local `.env` | Also safe as `EXPO_PUBLIC_STRAVA_CLIENT_ID` in the app (it's public) |
+| `STRAVA_CLIENT_SECRET` | GitHub Secrets + local `.env` **only** | **Never** in the Expo app or its build environment |
+| `RAILWAY_TOKEN` (or equivalent) | GitHub Secrets | Platform deploy token |
+
+**Local development:** copy `.env.example` → `.env` in both `api/` and `app/`, fill in values.
+
+**CI/CD:** add `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, and your deploy platform token to
+**GitHub → Settings → Secrets and variables → Actions**. The workflow at
+`.github/workflows/velogarage-api.yaml` injects them automatically on push to `main`.
+
+---
+
 ## Getting Started
 
 ### 1. Create a Strava API Application
